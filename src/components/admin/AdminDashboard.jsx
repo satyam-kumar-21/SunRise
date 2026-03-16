@@ -30,7 +30,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+      const response = await fetch('https://sunrise-backend-b849.onrender.com/api/admin/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
