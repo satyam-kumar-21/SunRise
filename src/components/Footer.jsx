@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { HiHome, HiInformationCircle, HiPhone, HiDocumentText, HiShieldCheck, HiOfficeBuilding, HiKey, HiGlobe } from 'react-icons/hi';
+import sunriseLogo from '../assets/sunrise_logo.png';
 
 const Footer = () => {
   return (
@@ -8,7 +9,9 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="space-y-4">
-            <h3 className="text-xl font-bold text-white mb-4">SunRise Properties</h3>
+            <div className="mb-4">
+              <img src={sunriseLogo} alt="SunRise Properties" className="h-12 w-auto" />
+            </div>
             <p className="text-slate-300 leading-relaxed">
               Your trusted partner in finding the perfect property. Discover residential and commercial spaces that match your dreams.
             </p>

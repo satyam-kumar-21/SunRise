@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { HiMenu, HiX, HiPhone, HiMail } from 'react-icons/hi';
+import sunriseLogo from '../assets/sunrise_logo.png';
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -13,7 +14,7 @@ const Header = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <header className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl">
       {/* Top Bar */}
       <div className="bg-gradient-to-r from-slate-700 to-slate-800 py-3 px-4 border-b border-slate-600">
         <div className="max-w-7xl mx-auto">
@@ -47,8 +48,8 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center min-h-[80px]">
         {/* Logo */}
         <div className="flex items-center">
-          <Link to="/" className="text-2xl sm:text-3xl font-bold text-white hover:text-amber-400 transition-colors duration-300 tracking-wide">
-            SunRise Properties
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity duration-300">
+            <img src={sunriseLogo} alt="SunRise Properties" className="h-12 w-auto sm:h-16" />
           </Link>
         </div>
 

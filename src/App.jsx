@@ -18,7 +18,7 @@ import PropTypes from 'prop-types';
 const UserLayout = ({ children }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col">
     <Header />
-    <main className="flex-grow">
+    <main className="flex-grow pt-32">
       {children}
     </main>
     <Footer />

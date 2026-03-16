@@ -19,6 +19,7 @@ import {
   HiTrendingUp,
   HiUser
 } from 'react-icons/hi';
+import sunriseLogo from '../../assets/sunrise_logo.png';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -596,11 +597,8 @@ const AdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-amber-500 rounded-lg flex items-center justify-center">
-                <HiOfficeBuilding className="w-5 h-5 text-white" />
-              </div>
+              <img src={sunriseLogo} alt="SunRise Properties" className="h-10 w-auto" />
               <div>
-                <h1 className="text-xl font-bold text-slate-900">SunRise Properties</h1>
                 <p className="text-sm text-slate-500">Admin Dashboard</p>
               </div>
             </div>
