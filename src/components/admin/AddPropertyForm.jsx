@@ -76,7 +76,7 @@ const AddPropertyForm = ({ onCancel, onSuccess }) => {
         formDataToSend.append('images', image);
       });
 
-      const response = await fetch('/api/properties', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

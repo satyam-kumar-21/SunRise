@@ -44,7 +44,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = useCallback(async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/admin/dashboard', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
         setDashboardData(data.data);
       } else {
         localStorage.removeItem('adminToken');
-        navigate('/admin/login');
+        navigate(`/admin/login`);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -68,7 +68,7 @@ const AdminDashboard = () => {
     try {
       setPropertiesLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/properties', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -89,7 +89,7 @@ const AdminDashboard = () => {
     try {
       setContactsLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/contact', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/contact`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -110,7 +110,7 @@ const AdminDashboard = () => {
     try {
       setUsersLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/users', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -157,8 +157,8 @@ const AdminDashboard = () => {
         return;
       }
 
-      console.log('Making API call to:', `/api/contact/${contactId}/status`);
-      const response = await fetch(`/api/contact/${contactId}/status`, {
+      // console.log('Making API call to:', `/api/contact/${contactId}/status`);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/contact/${contactId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/properties/${propertyId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties/${propertyId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -231,7 +231,7 @@ const AdminDashboard = () => {
   const handleUpdateContactStatus = async (contactId, status) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/contact/${contactId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/contact/${contactId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -257,7 +257,7 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/users/${userId}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -1315,7 +1315,7 @@ const EditPropertyModal = ({ property, onClose, onSuccess }) => {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`/api/properties/${property._id}`, {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties/${property._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -5,7 +5,7 @@ export const loginAdmin = createAsyncThunk(
     'auth/loginAdmin',
     async(credentials, { rejectWithValue }) => {
         try {
-            const response = await fetch('/api/admin/login', {
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/admin/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

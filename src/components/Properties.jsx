@@ -16,7 +16,7 @@ const Properties = ({ category = 'all' }) => {
 
   const fetchProperties = useCallback(async () => {
     try {
-      const response = await fetch('/api/properties');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties`);
       if (response.ok) {
         const data = await response.json();
         setProperties(data);

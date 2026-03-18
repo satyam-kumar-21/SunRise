@@ -137,7 +137,7 @@ const PropertyDetails = () => {
 
   const fetchProperty = async () => {
     try {
-      const response = await fetch(`/api/properties/${id}`);
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/properties/${id}`);
       if (response.ok) {
         const data = await response.json();
         setProperty(data);
@@ -160,7 +160,7 @@ const PropertyDetails = () => {
       propertyTitle: property.propertyName || `${property.bedroom} BHK ${property.propertyType}`
     };
 
-    const response = await fetch('/api/contact', {
+    const response = await fetch('${import.meta.env.VITE_BACKEND_URL}/api/contact', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
