@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   HiLogout,
   HiHome,
@@ -23,6 +24,8 @@ import sunriseLogo from '../../assets/sunrise_logo.png';
 import AddPropertyForm from './AddPropertyForm';
 
 const AdminDashboard = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -37,7 +40,6 @@ const AdminDashboard = () => {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [showEditProperty, setShowEditProperty] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
-  const navigate = useNavigate();
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -127,7 +129,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
-    if (!token) {
+    if (!token || !isAuthenticated) {
       navigate('/admin/login');
       return;
     }
@@ -135,11 +137,27 @@ const AdminDashboard = () => {
     fetchProperties();
     fetchContacts();
     fetchUsers();
-  }, [fetchDashboardData, fetchProperties, fetchContacts, fetchUsers, navigate]);
+  }, [fetchDashboardData, fetchProperties, fetchContacts, fetchUsers, navigate, isAuthenticated]);
 
   const updateContactStatus = async (contactId, status) => {
+    console.log('updateContactStatus called with:', { contactId, status, type: typeof contactId });
+
+    if (!contactId) {
+      alert('Invalid inquiry ID');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('Token from localStorage:', token);
+
+      if (!token) {
+        alert('Authentication token missing. Please log in again.');
+        navigate('/admin/login');
+        return;
+      }
+
+      console.log('Making API call to:', `/api/contact/${contactId}/status`);
       const response = await fetch(`/api/contact/${contactId}/status`, {
         method: 'PUT',
         headers: {
@@ -149,17 +167,25 @@ const AdminDashboard = () => {
         body: JSON.stringify({ status }),
       });
 
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+
       if (response.ok) {
+        const updatedContact = await response.json();
+        console.log('Inquiry updated successfully:', updatedContact);
         // Update local state
         setContacts(contacts.map(contact =>
           contact._id === contactId ? { ...contact, status } : contact
         ));
+        alert('Inquiry status updated successfully!');
       } else {
-        alert('Failed to update contact status');
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        console.error('Failed to update inquiry status:', response.status, errorData);
+        alert(`Failed to update inquiry status: ${errorData.message || response.statusText}`);
       }
     } catch (error) {
-      console.error('Error updating contact status:', error);
-      alert('Error updating contact status');
+      console.error('Error updating inquiry status:', error);
+      alert('Error updating inquiry status: ' + error.message);
     }
   };
 
@@ -414,13 +440,13 @@ const AdminDashboard = () => {
                           onChange={(e) => updateContactStatus(contact._id, e.target.value)}
                           className={`px-2 py-1 text-xs rounded-full border-0 ${
                             contact.status === 'read' ? 'bg-green-100 text-green-800' :
-                            contact.status === 'replied' ? 'bg-blue-100 text-blue-800' :
+                            contact.status === 'responded' ? 'bg-blue-100 text-blue-800' :
                             'bg-red-100 text-red-800'
                           }`}
                         >
                           <option value="unread">Unread</option>
                           <option value="read">Read</option>
-                          <option value="replied">Replied</option>
+                          <option value="responded">Replied</option>
                         </select>
                         <span className="text-xs text-slate-400">
                           {new Date(contact.createdAt).toLocaleDateString()}

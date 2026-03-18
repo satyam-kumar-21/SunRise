@@ -23,6 +23,10 @@ const AdminLogin = () => {
 
     const result = await dispatch(loginAdmin(credentials));
     if (loginAdmin.fulfilled.match(result)) {
+      // Store token in localStorage
+      if (result.payload.token) {
+        localStorage.setItem('adminToken', result.payload.token);
+      }
       navigate('/admin/dashboard');
     }
   };
