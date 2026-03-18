@@ -20,17 +20,29 @@ import {
   HiUser
 } from 'react-icons/hi';
 import sunriseLogo from '../../assets/sunrise_logo.png';
+import AddPropertyForm from './AddPropertyForm';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAddProperty, setShowAddProperty] = useState(false);
+  const [properties, setProperties] = useState([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [contactsLoading, setContactsLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [showEditProperty, setShowEditProperty] = useState(false);
+  const [editingProperty, setEditingProperty] = useState(null);
   const navigate = useNavigate();
 
   const fetchDashboardData = useCallback(async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('https://sunrise-backend-b849.onrender.com/api/admin/dashboard', {
+      const response = await fetch('/api/admin/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -50,6 +62,69 @@ const AdminDashboard = () => {
     }
   }, [navigate]);
 
+  const fetchProperties = useCallback(async () => {
+    try {
+      setPropertiesLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/properties', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProperties(data);
+      }
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      setPropertiesLoading(false);
+    }
+  }, []);
+
+  const fetchContacts = useCallback(async () => {
+    try {
+      setContactsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/contact', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setContacts(data);
+      }
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+    } finally {
+      setContactsLoading(false);
+    }
+  }, []);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setUsersLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token) {
@@ -57,11 +132,122 @@ const AdminDashboard = () => {
       return;
     }
     fetchDashboardData();
-  }, [fetchDashboardData, navigate]);
+    fetchProperties();
+    fetchContacts();
+    fetchUsers();
+  }, [fetchDashboardData, fetchProperties, fetchContacts, fetchUsers, navigate]);
+
+  const updateContactStatus = async (contactId, status) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/contact/${contactId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        // Update local state
+        setContacts(contacts.map(contact =>
+          contact._id === contactId ? { ...contact, status } : contact
+        ));
+      } else {
+        alert('Failed to update contact status');
+      }
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      alert('Error updating contact status');
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     navigate('/admin/login');
+  };
+
+  const handleDeleteProperty = async (propertyId) => {
+    if (!confirm('Are you sure you want to delete this property?')) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/properties/${propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchProperties(); // Refresh the list
+        fetchDashboardData(); // Update dashboard stats
+      } else {
+        alert('Failed to delete property');
+      }
+    } catch (error) {
+      console.error('Error deleting property:', error);
+      alert('Error deleting property');
+    }
+  };
+
+  const handleViewProperty = (property) => {
+    setSelectedProperty(property);
+    setShowPropertyModal(true);
+  };
+
+  const handleEditProperty = (property) => {
+    setEditingProperty(property);
+    setShowEditProperty(true);
+  };
+
+  const handleUpdateContactStatus = async (contactId, status) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/contact/${contactId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        fetchContacts(); // Refresh the list
+        fetchDashboardData(); // Update dashboard stats
+      } else {
+        alert('Failed to update contact status');
+      }
+    } catch (error) {
+      console.error('Error updating contact status:', error);
+      alert('Error updating contact status');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user?')) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        fetchUsers(); // Refresh the list
+        fetchDashboardData(); // Update dashboard stats
+      } else {
+        alert('Failed to delete user');
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Error deleting user');
+    }
   };
 
   const menuItems = [
@@ -103,55 +289,55 @@ const AdminDashboard = () => {
                 </div>
                 <div className="mt-4 flex items-center text-sm">
                   <HiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-600">+12% from last month</span>
+                  <span className="text-green-600">{dashboardData?.recentProperties || 0} added this month</span>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Active Users</p>
-                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.activeUsers || 0}</p>
+                    <p className="text-sm font-medium text-slate-600">Available Properties</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.availableProperties || 0}</p>
                   </div>
                   <div className="p-3 rounded-full bg-blue-100">
-                    <HiUser className="w-6 h-6 text-blue-600" />
+                    <HiOfficeBuilding className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm">
                   <HiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-600">+8% from last month</span>
+                  <span className="text-green-600">Ready for sale/rent</span>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">New Inquiries</p>
-                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.newInquiries || 0}</p>
+                    <p className="text-sm font-medium text-slate-600">Total Inquiries</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalContacts || 0}</p>
                   </div>
                   <div className="p-3 rounded-full bg-green-100">
                     <HiMail className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm">
-                  <HiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-600">+15% from last month</span>
+                  <HiTrendingUp className="w-4 h-4 text-red-500 mr-1" />
+                  <span className="text-red-600">{dashboardData?.unreadContacts || 0} unread</span>
                 </div>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Revenue</p>
-                    <p className="text-3xl font-bold text-slate-900">₹{dashboardData?.revenue || 0}</p>
+                    <p className="text-sm font-medium text-slate-600">Total Users</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalUsers || 0}</p>
                   </div>
                   <div className="p-3 rounded-full bg-purple-100">
-                    <HiCurrencyRupee className="w-6 h-6 text-purple-600" />
+                    <HiUser className="w-6 h-6 text-purple-600" />
                   </div>
                 </div>
                 <div className="mt-4 flex items-center text-sm">
                   <HiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-600">+22% from last month</span>
+                  <span className="text-green-600">Registered users</span>
                 </div>
               </div>
             </div>
@@ -161,27 +347,49 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Recent Properties</h3>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50">
+                  {properties.slice(0, 3).map((property) => (
+                    <div key={property._id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50">
                       <div className="w-12 h-12 bg-slate-200 rounded-lg flex items-center justify-center">
                         <HiOfficeBuilding className="w-6 h-6 text-slate-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">3 BHK Apartment</p>
-                        <p className="text-xs text-slate-500">Added 2 hours ago</p>
+                        <p className="text-sm font-medium text-slate-900">
+                          {property.propertyName || `${property.bedroom || ''} BHK ${property.propertyType}`}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Added {new Date(property.createdAt).toLocaleDateString()}
+                        </p>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="p-1 text-slate-400 hover:text-amber-600">
+                        <button
+                          onClick={() => {
+                            setSelectedProperty(property);
+                            setShowPropertyModal(true);
+                          }}
+                          className="p-1 text-slate-400 hover:text-amber-600"
+                        >
                           <HiEye className="w-4 h-4" />
                         </button>
-                        <button className="p-1 text-slate-400 hover:text-blue-600">
+                        <button
+                          onClick={() => {
+                            setEditingProperty(property);
+                            setShowEditProperty(true);
+                          }}
+                          className="p-1 text-slate-400 hover:text-blue-600"
+                        >
                           <HiPencil className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
                   ))}
+                  {properties.length === 0 && !propertiesLoading && (
+                    <p className="text-center text-slate-500 py-4">No properties found</p>
+                  )}
                 </div>
-                <button className="w-full mt-4 bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors">
+                <button
+                  onClick={() => setActiveTab('properties')}
+                  className="w-full mt-4 bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors"
+                >
                   View All Properties
                 </button>
               </div>
@@ -189,20 +397,45 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-4">Recent Inquiries</h3>
                 <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50">
+                  {contacts.slice(0, 3).map((contact) => (
+                    <div key={contact._id} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-slate-50">
                       <div className="w-12 h-12 bg-slate-200 rounded-full flex items-center justify-center">
                         <HiUser className="w-6 h-6 text-slate-600" />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900">John Doe</p>
-                        <p className="text-xs text-slate-500">Interested in 2 BHK apartment</p>
+                        <p className="text-sm font-medium text-slate-900">{contact.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {contact.message.length > 30 ? `${contact.message.substring(0, 30)}...` : contact.message}
+                        </p>
                       </div>
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">New</span>
+                      <div className="flex flex-col items-end space-y-1">
+                        <select
+                          value={contact.status || 'unread'}
+                          onChange={(e) => updateContactStatus(contact._id, e.target.value)}
+                          className={`px-2 py-1 text-xs rounded-full border-0 ${
+                            contact.status === 'read' ? 'bg-green-100 text-green-800' :
+                            contact.status === 'replied' ? 'bg-blue-100 text-blue-800' :
+                            'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          <option value="unread">Unread</option>
+                          <option value="read">Read</option>
+                          <option value="replied">Replied</option>
+                        </select>
+                        <span className="text-xs text-slate-400">
+                          {new Date(contact.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   ))}
+                  {contacts.length === 0 && !contactsLoading && (
+                    <p className="text-center text-slate-500 py-4">No inquiries found</p>
+                  )}
                 </div>
-                <button className="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
+                <button
+                  onClick={() => setActiveTab('inquiries')}
+                  className="w-full mt-4 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors"
+                >
                   View All Inquiries
                 </button>
               </div>
@@ -211,11 +444,21 @@ const AdminDashboard = () => {
         );
 
       case 'properties':
+        if (showAddProperty) {
+          return <AddPropertyForm onCancel={() => setShowAddProperty(false)} onSuccess={() => {
+            setShowAddProperty(false);
+            fetchProperties(); // Refresh the properties list
+            fetchDashboardData(); // Update dashboard stats
+          }} />;
+        }
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-slate-900">Property Management</h2>
-              <button className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2">
+              <button 
+                onClick={() => setShowAddProperty(true)}
+                className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2"
+              >
                 <HiPlus className="w-4 h-4" />
                 Add New Property
               </button>
@@ -237,48 +480,90 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
-                    {[1, 2, 3, 4, 5].map((item) => (
-                      <tr key={item} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center mr-3">
-                              <HiOfficeBuilding className="w-5 h-5 text-slate-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-slate-900">3 BHK Apartment</div>
-                              <div className="text-sm text-slate-500">Residential</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center text-sm text-slate-900">
-                            <HiLocationMarker className="w-4 h-4 mr-1 text-slate-400" />
-                            Bhopal, MP
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                          ₹45,00,000
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              <HiEye className="w-4 h-4" />
-                            </button>
-                            <button className="text-amber-600 hover:text-amber-900">
-                              <HiPencil className="w-4 h-4" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <HiTrash className="w-4 h-4" />
-                            </button>
-                          </div>
+                    {propertiesLoading ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
+                          Loading properties...
                         </td>
                       </tr>
-                    ))}
+                    ) : properties.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
+                          No properties found. Add your first property!
+                        </td>
+                      </tr>
+                    ) : (
+                      properties.map((property) => (
+                        <tr key={property._id} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center mr-3">
+                                {property.images && property.images.length > 0 ? (
+                                  <img
+                                    src={property.images[0]}
+                                    alt={property.propertyName || 'Property'}
+                                    className="w-10 h-10 object-cover rounded-lg"
+                                  />
+                                ) : (
+                                  <HiOfficeBuilding className="w-5 h-5 text-slate-600" />
+                                )}
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-slate-900">
+                                  {property.propertyName || `${property.bedroom || ''} BHK ${property.propertyType || 'Property'}`}
+                                </div>
+                                <div className="text-sm text-slate-500">{property.propertyType}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center text-sm text-slate-900">
+                              <HiLocationMarker className="w-4 h-4 mr-1 text-slate-400" />
+                              {property.location}, {property.city}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            ₹{property.price?.toLocaleString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              property.status === 'available'
+                                ? 'bg-green-100 text-green-800'
+                                : property.status === 'sold'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {property.status}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleViewProperty(property)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="View Details"
+                              >
+                                <HiEye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEditProperty(property)}
+                                className="text-amber-600 hover:text-amber-900"
+                                title="Edit Property"
+                              >
+                                <HiPencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteProperty(property._id)}
+                                className="text-red-600 hover:text-red-900"
+                                title="Delete Property"
+                              >
+                                <HiTrash className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -303,7 +588,7 @@ const AdminDashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-slate-600">Total Inquiries</p>
-                    <p className="text-2xl font-bold text-slate-900">24</p>
+                    <p className="text-2xl font-bold text-slate-900">{contacts.length}</p>
                   </div>
                   <HiMail className="w-8 h-8 text-blue-500" />
                 </div>
@@ -311,8 +596,8 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">New Today</p>
-                    <p className="text-2xl font-bold text-slate-900">5</p>
+                    <p className="text-sm font-medium text-slate-600">Unread</p>
+                    <p className="text-2xl font-bold text-slate-900">{contacts.filter(c => c.status === 'unread').length}</p>
                   </div>
                   <HiCalendar className="w-8 h-8 text-green-500" />
                 </div>
@@ -320,8 +605,8 @@ const AdminDashboard = () => {
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-slate-600">Pending Response</p>
-                    <p className="text-2xl font-bold text-slate-900">8</p>
+                    <p className="text-sm font-medium text-slate-600">Responded</p>
+                    <p className="text-2xl font-bold text-slate-900">{contacts.filter(c => c.status === 'responded').length}</p>
                   </div>
                   <HiDocumentText className="w-8 h-8 text-amber-500" />
                 </div>
@@ -333,36 +618,56 @@ const AdminDashboard = () => {
                 <h3 className="text-lg font-semibold text-slate-900">Recent Inquiries</h3>
               </div>
               <div className="divide-y divide-slate-200">
-                {[1, 2, 3, 4, 5].map((item) => (
-                  <div key={item} className="px-6 py-4 hover:bg-slate-50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
-                          <HiUser className="w-5 h-5 text-slate-600" />
+                {contactsLoading ? (
+                  <div className="px-6 py-4 text-center text-slate-500">Loading inquiries...</div>
+                ) : contacts.length === 0 ? (
+                  <div className="px-6 py-4 text-center text-slate-500">No inquiries found</div>
+                ) : (
+                  contacts.map((contact) => (
+                    <div key={contact._id} className="px-6 py-4 hover:bg-slate-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center">
+                            <HiUser className="w-5 h-5 text-slate-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-900">{contact.name}</p>
+                            <p className="text-sm text-slate-500">{contact.email} • {contact.phone}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-slate-900">John Doe</p>
-                          <p className="text-sm text-slate-500">john@example.com • +91 9876543210</p>
+                        <div className="text-right">
+                          <select
+                            value={contact.status}
+                            onChange={(e) => handleUpdateContactStatus(contact._id, e.target.value)}
+                            className={`px-2 py-1 text-xs rounded-full border-0 mb-1 block ${
+                              contact.status === 'unread'
+                                ? 'bg-red-100 text-red-800'
+                                : contact.status === 'read'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-green-100 text-green-800'
+                            }`}
+                          >
+                            <option value="unread">Unread</option>
+                            <option value="read">Read</option>
+                            <option value="responded">Responded</option>
+                          </select>
+                          <p className="text-xs text-slate-500">{new Date(contact.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">New</span>
-                        <p className="text-xs text-slate-500 mt-1">2 hours ago</p>
+                      <div className="mt-3">
+                        <p className="text-sm text-slate-700">{contact.message}</p>
+                      </div>
+                      <div className="mt-3 flex justify-end space-x-2">
+                        <button
+                          onClick={() => alert(`Full Details:\n\nName: ${contact.name}\nEmail: ${contact.email}\nPhone: ${contact.phone}\nMessage: ${contact.message}\nDate: ${new Date(contact.createdAt).toLocaleString()}`)}
+                          className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
+                        >
+                          View Details
+                        </button>
                       </div>
                     </div>
-                    <div className="mt-3">
-                      <p className="text-sm text-slate-700">Interested in 3 BHK apartment in Govindpura area. Budget around 50 lakhs.</p>
-                    </div>
-                    <div className="mt-3 flex justify-end space-x-2">
-                      <button className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors">
-                        Reply
-                      </button>
-                      <button className="px-3 py-1 bg-slate-500 text-white text-sm rounded hover:bg-slate-600 transition-colors">
-                        Mark as Read
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
@@ -465,47 +770,79 @@ const AdminDashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-slate-200">
-                    {[1, 2, 3, 4].map((item) => (
-                      <tr key={item} className="hover:bg-slate-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mr-3">
-                              <HiUser className="w-5 h-5 text-slate-600" />
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-slate-900">John Doe</div>
-                              <div className="text-sm text-slate-500">john@example.com</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                            Customer
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                            Active
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                          Jan 15, 2024
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <div className="flex space-x-2">
-                            <button className="text-blue-600 hover:text-blue-900">
-                              <HiEye className="w-4 h-4" />
-                            </button>
-                            <button className="text-amber-600 hover:text-amber-900">
-                              <HiPencil className="w-4 h-4" />
-                            </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <HiTrash className="w-4 h-4" />
-                            </button>
-                          </div>
+                    {usersLoading ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
+                          Loading users...
                         </td>
                       </tr>
-                    ))}
+                    ) : users.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
+                          No users found
+                        </td>
+                      </tr>
+                    ) : (
+                      users.map((user) => (
+                        <tr key={user._id} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mr-3">
+                                <HiUser className="w-5 h-5 text-slate-600" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-slate-900">{user.name}</div>
+                                <div className="text-sm text-slate-500">{user.email}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              user.role === 'admin'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                              Active
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            {new Date(user.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => alert(`User Details:\n\nName: ${user.name}\nEmail: ${user.email}\nPhone: ${user.phone}\nRole: ${user.role}\nJoined: ${new Date(user.createdAt).toLocaleString()}`)}
+                                className="text-blue-600 hover:text-blue-900"
+                                title="View Details"
+                              >
+                                <HiEye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => alert('Edit functionality will be implemented soon!')}
+                                className="text-amber-600 hover:text-amber-900"
+                                title="Edit User"
+                              >
+                                <HiPencil className="w-4 h-4" />
+                              </button>
+                              {user.role !== 'admin' && (
+                                <button
+                                  onClick={() => handleDeleteUser(user._id)}
+                                  className="text-red-600 hover:text-red-900"
+                                  title="Delete User"
+                                >
+                                  <HiTrash className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -644,6 +981,669 @@ const AdminDashboard = () => {
           <div className="flex-1">
             {renderContent()}
           </div>
+        </div>
+      </div>
+
+      {/* Property Details Modal */}
+      {showPropertyModal && selectedProperty && (
+        <PropertyDetailsModal
+          property={selectedProperty}
+          onClose={() => {
+            setShowPropertyModal(false);
+            setSelectedProperty(null);
+          }}
+        />
+      )}
+
+      {/* Edit Property Modal */}
+      {showEditProperty && editingProperty && (
+        <EditPropertyModal
+          property={editingProperty}
+          onClose={() => {
+            setShowEditProperty(false);
+            setEditingProperty(null);
+          }}
+          onSuccess={() => {
+            setShowEditProperty(false);
+            setEditingProperty(null);
+            fetchProperties();
+            fetchDashboardData();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Property Details Modal Component
+const PropertyDetailsModal = ({ property, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Property Details</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Property Images */}
+          <div className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {property.images && property.images.length > 0 ? (
+                <>
+                  <div className="aspect-video bg-slate-100 rounded-lg overflow-hidden">
+                    <img
+                      src={property.images[0]}
+                      alt="Main property"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {property.images.slice(1, 5).map((image, index) => (
+                      <div key={index} className="aspect-square bg-slate-100 rounded-lg overflow-hidden">
+                        <img
+                          src={image}
+                          alt={`Property ${index + 2}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="aspect-video bg-slate-100 rounded-lg flex items-center justify-center">
+                  <HiHome className="w-16 h-16 text-slate-400" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Property Info */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Basic Information</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Property Name:</span>
+                  <span className="font-medium">{property.propertyName || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Type:</span>
+                  <span className="font-medium capitalize">{property.propertyType}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Status:</span>
+                  <span className={`font-medium capitalize px-2 py-1 rounded text-sm ${
+                    property.status === 'available' ? 'bg-green-100 text-green-800' :
+                    property.status === 'sold' ? 'bg-red-100 text-red-800' :
+                    'bg-blue-100 text-blue-800'
+                  }`}>
+                    {property.status}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Price:</span>
+                  <span className="font-medium text-amber-600">₹{property.price?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Area:</span>
+                  <span className="font-medium">{property.area} sq.ft</span>
+                </div>
+                {property.plotArea && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Plot Area:</span>
+                    <span className="font-medium">{property.plotArea} sq.ft</span>
+                  </div>
+                )}
+                {property.bedroom && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Bedrooms:</span>
+                    <span className="font-medium">{property.bedroom}</span>
+                  </div>
+                )}
+                {property.transaction && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Transaction:</span>
+                    <span className="font-medium capitalize">{property.transaction}</span>
+                  </div>
+                )}
+                {property.furnishing && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Furnishing:</span>
+                    <span className="font-medium capitalize">{property.furnishing}</span>
+                  </div>
+                )}
+                {property.propertyAge && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Property Age:</span>
+                    <span className="font-medium">{property.propertyAge}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-semibold text-slate-900 mb-4">Location Details</h3>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-slate-600">City:</span>
+                  <span className="font-medium">{property.city}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-600">Location:</span>
+                  <span className="font-medium">{property.location}</span>
+                </div>
+                {property.flatNo && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Flat No:</span>
+                    <span className="font-medium">{property.flatNo}</span>
+                  </div>
+                )}
+                {property.buildingName && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Building:</span>
+                    <span className="font-medium">{property.buildingName}</span>
+                  </div>
+                )}
+                {property.street && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Street:</span>
+                    <span className="font-medium">{property.street}</span>
+                  </div>
+                )}
+                {property.landmark && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Landmark:</span>
+                    <span className="font-medium">{property.landmark}</span>
+                  </div>
+                )}
+                {property.pinCode && (
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Pin Code:</span>
+                    <span className="font-medium">{property.pinCode}</span>
+                  </div>
+                )}
+                {property.address && (
+                  <div>
+                    <span className="text-slate-600 block mb-1">Full Address:</span>
+                    <span className="font-medium">{property.address}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Description */}
+          {property.propertyDescription && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">Description</h3>
+              <p className="text-slate-700 leading-relaxed">{property.propertyDescription}</p>
+            </div>
+          )}
+
+          {/* Detailed Information */}
+          {property.detailedInformation && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">Detailed Information</h3>
+              <p className="text-slate-700 leading-relaxed">{property.detailedInformation}</p>
+            </div>
+          )}
+
+          {/* Amenities */}
+          {property.amenities && property.amenities.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">Amenities</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {property.amenities.map((amenity, index) => (
+                  <div key={index} className="flex items-center text-sm text-slate-700 bg-slate-50 px-3 py-2 rounded">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                    {amenity}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* YouTube URL */}
+          {property.youtubeUrl && (
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">Video</h3>
+              <a
+                href={property.youtubeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 underline"
+              >
+                View Property Video
+              </a>
+            </div>
+          )}
+
+          {/* Property Metadata */}
+          <div className="border-t pt-4">
+            <div className="grid grid-cols-2 gap-4 text-sm text-slate-600">
+              <div>
+                <span className="font-medium">Property ID:</span> {property._id?.slice(-8)}
+              </div>
+              <div>
+                <span className="font-medium">Listed:</span> {new Date(property.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Edit Property Modal Component
+const EditPropertyModal = ({ property, onClose, onSuccess }) => {
+  const [formData, setFormData] = useState({
+    status: property.status || 'available',
+    propertyType: property.propertyType || 'apartment',
+    price: property.price || '',
+    area: property.area || '',
+    plotArea: property.plotArea || '',
+    bedroom: property.bedroom || '',
+    transaction: property.transaction || '',
+    furnishing: property.furnishing || '',
+    propertyAge: property.propertyAge || '',
+    flatNo: property.flatNo || '',
+    propertyName: property.propertyName || '',
+    buildingName: property.buildingName || '',
+    street: property.street || '',
+    landmark: property.landmark || '',
+    pinCode: property.pinCode || '',
+    address: property.address || '',
+    city: property.city || '',
+    location: property.location || '',
+    propertyDescription: property.propertyDescription || '',
+    detailedInformation: property.detailedInformation || '',
+    amenities: property.amenities || [],
+    youtubeUrl: property.youtubeUrl || '',
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAmenityChange = (amenity) => {
+    setFormData(prev => ({
+      ...prev,
+      amenities: prev.amenities.includes(amenity)
+        ? prev.amenities.filter(a => a !== amenity)
+        : [...prev.amenities, amenity]
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/properties/${property._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        onSuccess();
+      } else {
+        alert('Failed to update property');
+      }
+    } catch (error) {
+      console.error('Error updating property:', error);
+      alert('Error updating property');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const amenitiesList = [
+    'Water Softener', 'Kids Play Area', 'Volleyball Court', 'Badminton Court', 'Cricket Pitch', 'Wifi',
+    'Dining Table', 'Curtains', 'Chimney', 'Microwave', 'Stove', 'Water Purifier', 'Washing Machine',
+    'Fans', 'Lights', 'Exhaust Fan', 'Sofa', 'Wardrobe', 'T.V', 'Geysers', 'Modular Kitchen', 'Air Condition',
+    'Refrigerator', 'Earthquake Resistant', 'Landscaped Garden', 'Indoor Games', 'Jogging park', 'Yoga centre',
+    'Amphitheatre', 'Poolside Party Deck', 'Sklandscaping Party Lawns', 'Sky Lounge', 'Cabana cafe', 'Astro deck',
+    'Herbal garden', 'Sky Walkway', 'Yoga Pads', 'UPS', 'Conference Room', 'Cafeteria', 'Garden', 'Terrace',
+    'Lawn', 'Intercom', 'Reserved Park', 'CCTV', 'PlayArea', 'Balcony', 'Servant Quarters', 'Gym', 'Internet Connection',
+    'Security', 'Parking', 'Swimming Pool', 'Gas Connection', 'Power Backup', 'Rain Water Harvesting', 'Clubhouse',
+    'Lift', 'Vaastu', 'Air Conditioning', 'Large Windows/Natural Light', 'Stainless Steel Appliances', 'Laundry'
+  ];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-slate-900">Edit Property</h2>
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Property Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Property Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="available">Available</option>
+                    <option value="sold">Sold</option>
+                    <option value="rented">Rented</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Property Type *</label>
+                  <select
+                    name="propertyType"
+                    value={formData.propertyType}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="apartment">Apartment</option>
+                    <option value="villa">Villa</option>
+                    <option value="plot">Plot</option>
+                    <option value="commercial">Commercial</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Price *</label>
+                  <input
+                    type="number"
+                    name="price"
+                    value={formData.price}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Enter price"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Area (Sq.ft) *</label>
+                  <input
+                    type="number"
+                    name="area"
+                    value={formData.area}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Enter area"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Plot Area (Sq.ft)</label>
+                  <input
+                    type="number"
+                    name="plotArea"
+                    value={formData.plotArea}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Enter plot area"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Bedroom</label>
+                  <input
+                    type="number"
+                    name="bedroom"
+                    value={formData.bedroom}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Number of bedrooms"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Transaction</label>
+                  <select
+                    name="transaction"
+                    value={formData.transaction}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Select Transaction</option>
+                    <option value="sale">Sale</option>
+                    <option value="rent">Rent</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Furnishing</label>
+                  <select
+                    name="furnishing"
+                    value={formData.furnishing}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  >
+                    <option value="">Select Furnishing</option>
+                    <option value="furnished">Furnished</option>
+                    <option value="semi-furnished">Semi-Furnished</option>
+                    <option value="unfurnished">Unfurnished</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Property Age</label>
+                  <input
+                    type="text"
+                    name="propertyAge"
+                    value={formData.propertyAge}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="e.g., 2 years old"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Location Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Location Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Flat No./Unit No.</label>
+                  <input
+                    type="text"
+                    name="flatNo"
+                    value={formData.flatNo}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Flat/Unit number"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Property Name</label>
+                  <input
+                    type="text"
+                    name="propertyName"
+                    value={formData.propertyName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Property name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Building Name</label>
+                  <input
+                    type="text"
+                    name="buildingName"
+                    value={formData.buildingName}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Building name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Street</label>
+                  <input
+                    type="text"
+                    name="street"
+                    value={formData.street}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Street name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Landmark</label>
+                  <input
+                    type="text"
+                    name="landmark"
+                    value={formData.landmark}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Nearby landmark"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Pin Code</label>
+                  <input
+                    type="text"
+                    name="pinCode"
+                    value={formData.pinCode}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Pin code"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
+                  <textarea
+                    name="address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Full address"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">City *</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="City"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Location *</label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Location/Area"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Property Description */}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Property Description</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+                  <textarea
+                    name="propertyDescription"
+                    value={formData.propertyDescription}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Detailed property description"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Detailed Information</label>
+                  <textarea
+                    name="detailedInformation"
+                    value={formData.detailedInformation}
+                    onChange={handleInputChange}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    placeholder="Additional detailed information"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Amenities */}
+            <div>
+              <h3 className="text-lg font-semibold text-slate-900 mb-4">Amenities</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                {amenitiesList.map((amenity) => (
+                  <label key={amenity} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.amenities.includes(amenity)}
+                      onChange={() => handleAmenityChange(amenity)}
+                      className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                    />
+                    <span className="text-sm text-slate-700">{amenity}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* YouTube URL */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">YouTube URL</label>
+              <input
+                type="url"
+                name="youtubeUrl"
+                value={formData.youtubeUrl}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                placeholder="https://youtube.com/watch?v=..."
+              />
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end space-x-4 pt-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-6 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Updating Property...' : 'Update Property'}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

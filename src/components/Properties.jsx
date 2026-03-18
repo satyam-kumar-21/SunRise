@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { HiHome, HiOfficeBuilding, HiLocationMarker, HiCurrencyRupee, HiFilter } from 'react-icons/hi';
 import PropTypes from 'prop-types';
 
@@ -11,14 +12,11 @@ const Properties = ({ category = 'all' }) => {
     maxPrice: '',
     location: ''
   });
+  const navigate = useNavigate();
 
   const fetchProperties = useCallback(async () => {
     try {
-      let url = 'http://localhost:5000/api/properties';
-      if (category !== 'all') {
-        url += `?category=${category}`;
-      }
-      const response = await fetch(url);
+      const response = await fetch('/api/properties');
       if (response.ok) {
         const data = await response.json();
         setProperties(data);
@@ -28,7 +26,7 @@ const Properties = ({ category = 'all' }) => {
     } finally {
       setLoading(false);
     }
-  }, [category]);
+  }, []);
 
   useEffect(() => {
     fetchProperties();
@@ -42,7 +40,21 @@ const Properties = ({ category = 'all' }) => {
   };
 
   const filteredProperties = properties.filter(property => {
-    if (filters.category !== 'all' && property.category !== filters.category) return false;
+    // Filter by category/route
+    if (category === 'residential') {
+      if (!['apartment', 'villa', 'plot'].includes(property.propertyType)) return false;
+    } else if (category === 'commercial') {
+      if (property.propertyType !== 'commercial') return false;
+    }
+
+    // Additional filters
+    if (filters.category !== 'all') {
+      if (filters.category === 'residential') {
+        if (!['apartment', 'villa', 'plot'].includes(property.propertyType)) return false;
+      } else if (filters.category === 'commercial') {
+        if (property.propertyType !== 'commercial') return false;
+      }
+    }
     if (filters.minPrice && property.price < parseInt(filters.minPrice)) return false;
     if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) return false;
     if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
@@ -118,33 +130,47 @@ const Properties = ({ category = 'all' }) => {
           {/* Properties Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredProperties.map((property) => (
-              <div key={property.id} className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+              <div
+                key={property._id}
+                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                onClick={() => navigate(`/property/${property._id}`)}
+              >
                 <div className="h-48 bg-slate-200 flex items-center justify-center">
                   {property.images && property.images.length > 0 ? (
-                    <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" />
+                    <img src={property.images[0]} alt={property.propertyName || 'Property'} className="w-full h-full object-cover" />
                   ) : (
                     <HiHome className="w-16 h-16 text-slate-400" />
                   )}
                 </div>
                 <div className="p-6">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-semibold text-slate-800">{property.title}</h3>
+                    <h3 className="text-xl font-semibold text-slate-800">
+                      {property.propertyName || `${property.bedroom || ''} BHK ${property.propertyType}`}
+                    </h3>
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      property.type === 'sale' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'
+                      property.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                     }`}>
-                      {property.type === 'sale' ? 'For Sale' : 'For Rent'}
+                      {property.status}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-slate-600 mb-2">
                     <HiLocationMarker className="w-4 h-4" />
-                    <span className="text-sm">{property.location}</span>
+                    <span className="text-sm">{property.location}, {property.city}</span>
                   </div>
                   <div className="flex items-center gap-1 text-amber-600 font-semibold mb-3">
                     <HiCurrencyRupee className="w-5 h-5" />
-                    <span>{property.price.toLocaleString()}</span>
+                    <span>₹{property.price?.toLocaleString()}</span>
                   </div>
-                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">{property.description}</p>
-                  <button className="w-full bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors font-medium">
+                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+                    {property.propertyDescription || `Beautiful ${property.propertyType} in ${property.location}`}
+                  </p>
+                  <button
+                    className="w-full bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/property/${property._id}`);
+                    }}
+                  >
                     View Details
                   </button>
                 </div>

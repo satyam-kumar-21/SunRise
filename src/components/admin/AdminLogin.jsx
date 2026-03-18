@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import { loginAdmin, clearError } from '../../store/slices/authSlice';
 import { HiLockClosed, HiUser } from 'react-icons/hi';
 
 const AdminLogin = () => {
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
   const [credentials, setCredentials] = useState({ username: '', password: '' });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -17,30 +19,11 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    dispatch(clearError());
 
-    try {
-      const response = await fetch('https://sunrise-backend-b849.onrender.com/api/admin/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem('adminToken', data.token);
-        navigate('/admin/dashboard');
-      } else {
-        setError(data.message || 'Login failed');
-      }
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+    const result = await dispatch(loginAdmin(credentials));
+    if (loginAdmin.fulfilled.match(result)) {
+      navigate('/admin/dashboard');
     }
   };
 
