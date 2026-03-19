@@ -17,6 +17,7 @@ import HeroSlider from './components/HeroSlider';
 import Home from './components/Home';
 import PropTypes from 'prop-types';
 import { Toaster } from 'react-hot-toast';
+import ScrollToTop from './components/ScrollToTop';
 
 // User Layout Component
 const UserLayout = ({ children }) => (
@@ -47,6 +48,7 @@ AdminLayout.propTypes = {
 function App() {
   return (
     <>
+      <ScrollToTop />
       <Toaster position="top-right" />
       <Routes>
         {/* User Routes with Header/Footer */}
