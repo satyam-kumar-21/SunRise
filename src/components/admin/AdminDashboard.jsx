@@ -1,11 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
 import {
   HiLogout,
   HiHome,
   HiOfficeBuilding,
-  HiUserGroup,
   HiChartBar,
   HiCog,
   HiMail,
@@ -34,8 +34,6 @@ const AdminDashboard = () => {
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [contacts, setContacts] = useState([]);
   const [contactsLoading, setContactsLoading] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [usersLoading, setUsersLoading] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [showEditProperty, setShowEditProperty] = useState(false);
@@ -106,27 +104,6 @@ const AdminDashboard = () => {
     }
   }, []);
 
-  const fetchUsers = useCallback(async () => {
-    try {
-      setUsersLoading(true);
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    } finally {
-      setUsersLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token || !isAuthenticated) {
@@ -136,14 +113,13 @@ const AdminDashboard = () => {
     fetchDashboardData();
     fetchProperties();
     fetchContacts();
-    fetchUsers();
-  }, [fetchDashboardData, fetchProperties, fetchContacts, fetchUsers, navigate, isAuthenticated]);
+  }, [fetchDashboardData, fetchProperties, fetchContacts, navigate, isAuthenticated]);
 
   const updateContactStatus = async (contactId, status) => {
     console.log('updateContactStatus called with:', { contactId, status, type: typeof contactId });
 
     if (!contactId) {
-      alert('Invalid inquiry ID');
+      toast.error('Invalid inquiry ID');
       return;
     }
 
@@ -152,7 +128,7 @@ const AdminDashboard = () => {
       console.log('Token from localStorage:', token);
 
       if (!token) {
-        alert('Authentication token missing. Please log in again.');
+        toast.error('Authentication token missing. Please log in again.');
         navigate('/admin/login');
         return;
       }
@@ -177,15 +153,15 @@ const AdminDashboard = () => {
         setContacts(contacts.map(contact =>
           contact._id === contactId ? { ...contact, status } : contact
         ));
-        alert('Inquiry status updated successfully!');
+        toast.success('Inquiry status updated successfully!');
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
         console.error('Failed to update inquiry status:', response.status, errorData);
-        alert(`Failed to update inquiry status: ${errorData.message || response.statusText}`);
+        toast.error(`Failed to update inquiry status: ${errorData.message || response.statusText}`);
       }
     } catch (error) {
       console.error('Error updating inquiry status:', error);
-      alert('Error updating inquiry status: ' + error.message);
+      toast.error('Error updating inquiry status: ' + error.message);
     }
   };
 
@@ -207,14 +183,15 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
+        toast.success('Property deleted successfully!');
         fetchProperties(); // Refresh the list
         fetchDashboardData(); // Update dashboard stats
       } else {
-        alert('Failed to delete property');
+        toast.error('Failed to delete property');
       }
     } catch (error) {
       console.error('Error deleting property:', error);
-      alert('Error deleting property');
+      toast.error('Error deleting property');
     }
   };
 
@@ -241,38 +218,15 @@ const AdminDashboard = () => {
       });
 
       if (response.ok) {
+        toast.success('Contact status updated');
         fetchContacts(); // Refresh the list
         fetchDashboardData(); // Update dashboard stats
       } else {
-        alert('Failed to update contact status');
+        toast.error('Failed to update contact status');
       }
     } catch (error) {
       console.error('Error updating contact status:', error);
-      alert('Error updating contact status');
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-
-    try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/users/${userId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        fetchUsers(); // Refresh the list
-        fetchDashboardData(); // Update dashboard stats
-      } else {
-        alert('Failed to delete user');
-      }
-    } catch (error) {
-      console.error('Error deleting user:', error);
-      alert('Error deleting user');
+      toast.error('Error updating contact status');
     }
   };
 
@@ -281,7 +235,6 @@ const AdminDashboard = () => {
     { id: 'properties', label: 'Properties', icon: HiOfficeBuilding },
     { id: 'inquiries', label: 'Inquiries', icon: HiMail },
     { id: 'analytics', label: 'Analytics', icon: HiChartBar },
-    { id: 'users', label: 'Users', icon: HiUserGroup },
     { id: 'settings', label: 'Settings', icon: HiCog },
   ];
 
@@ -351,21 +304,6 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-slate-600">Total Users</p>
-                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalUsers || 0}</p>
-                  </div>
-                  <div className="p-3 rounded-full bg-purple-100">
-                    <HiUser className="w-6 h-6 text-purple-600" />
-                  </div>
-                </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <HiTrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                  <span className="text-green-600">Registered users</span>
-                </div>
-              </div>
             </div>
 
             {/* Recent Activity */}
@@ -764,113 +702,6 @@ const AdminDashboard = () => {
               <h3 className="text-lg font-semibold text-slate-900 mb-4">Monthly Performance</h3>
               <div className="h-64 bg-slate-100 rounded-lg flex items-center justify-center">
                 <p className="text-slate-500">Chart visualization would go here</p>
-              </div>
-            </div>
-          </div>
-        );
-
-      case 'users':
-        return (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-900">User Management</h2>
-              <button className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2">
-                <HiPlus className="w-4 h-4" />
-                Add User
-              </button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-200">
-                <h3 className="text-lg font-semibold text-slate-900">All Users</h3>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-slate-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">User</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Joined</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-slate-200">
-                    {usersLoading ? (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
-                          Loading users...
-                        </td>
-                      </tr>
-                    ) : users.length === 0 ? (
-                      <tr>
-                        <td colSpan="5" className="px-6 py-4 text-center text-slate-500">
-                          No users found
-                        </td>
-                      </tr>
-                    ) : (
-                      users.map((user) => (
-                        <tr key={user._id} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center">
-                              <div className="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mr-3">
-                                <HiUser className="w-5 h-5 text-slate-600" />
-                              </div>
-                              <div>
-                                <div className="text-sm font-medium text-slate-900">{user.name}</div>
-                                <div className="text-sm text-slate-500">{user.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              user.role === 'admin'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {user.role}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                              Active
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            {new Date(user.createdAt).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => alert(`User Details:\n\nName: ${user.name}\nEmail: ${user.email}\nPhone: ${user.phone}\nRole: ${user.role}\nJoined: ${new Date(user.createdAt).toLocaleString()}`)}
-                                className="text-blue-600 hover:text-blue-900"
-                                title="View Details"
-                              >
-                                <HiEye className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={() => alert('Edit functionality will be implemented soon!')}
-                                className="text-amber-600 hover:text-amber-900"
-                                title="Edit User"
-                              >
-                                <HiPencil className="w-4 h-4" />
-                              </button>
-                              {user.role !== 'admin' && (
-                                <button
-                                  onClick={() => handleDeleteUser(user._id)}
-                                  className="text-red-600 hover:text-red-900"
-                                  title="Delete User"
-                                >
-                                  <HiTrash className="w-4 h-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
               </div>
             </div>
           </div>
@@ -1325,13 +1156,14 @@ const EditPropertyModal = ({ property, onClose, onSuccess }) => {
       });
 
       if (response.ok) {
+        toast.success('Property updated successfully!');
         onSuccess();
       } else {
-        alert('Failed to update property');
+        toast.error('Failed to update property');
       }
     } catch (error) {
       console.error('Error updating property:', error);
-      alert('Error updating property');
+      toast.error('Error updating property');
     } finally {
       setLoading(false);
     }

@@ -8,9 +8,14 @@ const Properties = ({ category = 'all' }) => {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: 'all',
+    propertyType: 'all',
     minPrice: '',
     maxPrice: '',
-    location: ''
+    location: '',
+    transaction: 'all',
+    status: 'all',
+    bedroom: 'all',
+    furnishing: 'all'
   });
   const navigate = useNavigate();
 
@@ -39,15 +44,34 @@ const Properties = ({ category = 'all' }) => {
     });
   };
 
+  const clearFilters = () => {
+    setFilters({
+      category: 'all',
+      propertyType: 'all',
+      minPrice: '',
+      maxPrice: '',
+      location: '',
+      transaction: 'all',
+      status: 'all',
+      bedroom: 'all',
+      furnishing: 'all'
+    });
+  };
+
+  const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    if (key === 'minPrice' || key === 'maxPrice' || key === 'location') return value !== '';
+    return value !== 'all';
+  });
+
   const filteredProperties = properties.filter(property => {
-    // Filter by category/route
+    // Filter by route category
     if (category === 'residential') {
       if (!['apartment', 'villa', 'plot'].includes(property.propertyType)) return false;
     } else if (category === 'commercial') {
       if (property.propertyType !== 'commercial') return false;
     }
 
-    // Additional filters
+    // Additional User Filters
     if (filters.category !== 'all') {
       if (filters.category === 'residential') {
         if (!['apartment', 'villa', 'plot'].includes(property.propertyType)) return false;
@@ -55,9 +79,16 @@ const Properties = ({ category = 'all' }) => {
         if (property.propertyType !== 'commercial') return false;
       }
     }
+    
+    if (filters.propertyType !== 'all' && property.propertyType !== filters.propertyType) return false;
     if (filters.minPrice && property.price < parseInt(filters.minPrice)) return false;
     if (filters.maxPrice && property.price > parseInt(filters.maxPrice)) return false;
     if (filters.location && !property.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+    if (filters.transaction !== 'all' && property.transaction !== filters.transaction) return false;
+    if (filters.status !== 'all' && property.status !== filters.status) return false;
+    if (filters.bedroom !== 'all' && property.bedroom?.toString() !== filters.bedroom) return false;
+    if (filters.furnishing !== 'all' && property.furnishing !== filters.furnishing) return false;
+    
     return true;
   });
 
@@ -84,45 +115,135 @@ const Properties = ({ category = 'all' }) => {
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <HiFilter className="text-amber-500 w-5 h-5" />
-              <h3 className="text-lg font-semibold text-slate-800">Filters</h3>
+          <div className="bg-white rounded-lg shadow-lg p-6 mb-8 border border-slate-100">
+            <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2">
+                <HiFilter className="text-amber-500 w-6 h-6" />
+                <h3 className="text-xl font-bold text-slate-800">Filter Properties</h3>
+              </div>
+              
+              {hasActiveFilters && (
+                <button 
+                  onClick={clearFilters}
+                  className="text-sm font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                >
+                  Clear All Filters
+                </button>
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+
+            {hasActiveFilters && (
+              <div className="flex flex-wrap gap-2 mb-6">
+                {Object.entries(filters).map(([key, value]) => {
+                  if (value === 'all' || value === '') return null;
+                  const label = key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1');
+                  return (
+                    <span key={key} className="inline-flex items-center px-3 py-1 bg-amber-50 text-amber-700 text-sm font-medium rounded-full border border-amber-200">
+                      <span className="text-amber-900 mr-1">{label.trim()}:</span> {value}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
               <select
                 name="category"
                 value={filters.category}
                 onChange={handleFilterChange}
-                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
               >
                 <option value="all">All Categories</option>
                 <option value="residential">Residential</option>
                 <option value="commercial">Commercial</option>
               </select>
+
+              <select
+                name="propertyType"
+                value={filters.propertyType}
+                onChange={handleFilterChange}
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
+              >
+                <option value="all">All Types</option>
+                <option value="apartment">Apartment</option>
+                <option value="villa">Villa</option>
+                <option value="plot">Plot</option>
+                <option value="commercial">Commercial</option>
+              </select>
+
+              <select
+                name="transaction"
+                value={filters.transaction}
+                onChange={handleFilterChange}
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
+              >
+                <option value="all">Sale / Rent</option>
+                <option value="sale">For Sale</option>
+                <option value="rent">For Rent</option>
+              </select>
+
+              <select
+                name="status"
+                value={filters.status}
+                onChange={handleFilterChange}
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
+              >
+                <option value="all">Any Status</option>
+                <option value="available">Available</option>
+                <option value="sold">Sold</option>
+                <option value="rented">Rented</option>
+              </select>
+
+              <select
+                name="bedroom"
+                value={filters.bedroom}
+                onChange={handleFilterChange}
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
+                disabled={filters.category === 'commercial' || filters.propertyType === 'plot' || filters.propertyType === 'commercial'}
+              >
+                <option value="all">Bedrooms (Any)</option>
+                <option value="1">1 BHK</option>
+                <option value="2">2 BHK</option>
+                <option value="3">3 BHK</option>
+                <option value="4">4 BHK</option>
+                <option value="5">5+ BHK</option>
+              </select>
+
+              <select
+                name="furnishing"
+                value={filters.furnishing}
+                onChange={handleFilterChange}
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
+              >
+                <option value="all">Furnishing (Any)</option>
+                <option value="furnished">Furnished</option>
+                <option value="semi-furnished">Semi-Furnished</option>
+                <option value="unfurnished">Unfurnished</option>
+              </select>
+
               <input
                 type="number"
                 name="minPrice"
-                placeholder="Min Price"
+                placeholder="Min Price (₹)"
                 value={filters.minPrice}
                 onChange={handleFilterChange}
-                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
               />
               <input
                 type="number"
                 name="maxPrice"
-                placeholder="Max Price"
+                placeholder="Max Price (₹)"
                 value={filters.maxPrice}
                 onChange={handleFilterChange}
-                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all"
               />
               <input
                 type="text"
                 name="location"
-                placeholder="Location"
+                placeholder="Search Location..."
                 value={filters.location}
                 onChange={handleFilterChange}
-                className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                className="px-4 py-3 border border-slate-200 bg-slate-50 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-medium text-slate-700 transition-all lg:col-span-1 md:col-span-3"
               />
             </div>
           </div>
@@ -132,40 +253,52 @@ const Properties = ({ category = 'all' }) => {
             {filteredProperties.map((property) => (
               <div
                 key={property._id}
-                className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+                className="group bg-white rounded-2xl shadow-md hover:shadow-2xl overflow-hidden transition-all duration-300 transform hover:-translate-y-1 border border-slate-100 cursor-pointer flex flex-col"
                 onClick={() => navigate(`/property/${property._id}`)}
               >
-                <div className="h-48 bg-slate-200 flex items-center justify-center">
+                <div className="relative aspect-[4/3] bg-slate-200 overflow-hidden">
                   {property.images && property.images.length > 0 ? (
-                    <img src={property.images[0]} alt={property.propertyName || 'Property'} className="w-full h-full object-cover" />
+                    <img 
+                      src={property.images[0]} 
+                      alt={property.propertyName || 'Property'} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-in-out" 
+                    />
                   ) : (
-                    <HiHome className="w-16 h-16 text-slate-400" />
+                    <div className="w-full h-full flex items-center justify-center">
+                      <HiHome className="w-16 h-16 text-slate-400" />
+                    </div>
                   )}
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-semibold text-slate-800">
-                      {property.propertyName || `${property.bedroom || ''} BHK ${property.propertyType}`}
-                    </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      property.status === 'available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  {/* Glassmorphic Status Badge */}
+                  <div className="absolute top-4 right-4 z-10">
+                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${
+                      property.status === 'available' 
+                        ? 'bg-white/90 text-green-700' 
+                        : 'bg-white/90 text-red-700'
                     }`}>
-                      {property.status}
+                      {property.status.toUpperCase()}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1 text-slate-600 mb-2">
-                    <HiLocationMarker className="w-4 h-4" />
-                    <span className="text-sm">{property.location}, {property.city}</span>
+                  {/* Subtle bottom gradient */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                </div>
+                
+                <div className="p-5 flex-1 flex flex-col">
+                  <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-1 group-hover:text-amber-600 transition-colors">
+                    {property.propertyName || `${property.bedroom || ''} BHK ${property.propertyType}`}
+                  </h3>
+                  <div className="flex items-center gap-1 text-slate-500 mb-3 text-sm">
+                    <HiLocationMarker className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                    <span className="line-clamp-1">{property.location}, {property.city}</span>
                   </div>
-                  <div className="flex items-center gap-1 text-amber-600 font-semibold mb-3">
-                    <HiCurrencyRupee className="w-5 h-5" />
-                    <span>₹{property.price?.toLocaleString()}</span>
+                  <div className="flex items-center gap-1 text-amber-600 font-bold text-2xl mb-3">
+                    <HiCurrencyRupee className="w-6 h-6" />
+                    <span>{property.price?.toLocaleString()}</span>
                   </div>
-                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
-                    {property.propertyDescription || `Beautiful ${property.propertyType} in ${property.location}`}
+                  <p className="text-slate-600 text-sm mb-5 line-clamp-2 flex-1">
+                    {property.propertyDescription || `Premium ${property.propertyType} located in the heart of ${property.location}.`}
                   </p>
                   <button
-                    className="w-full bg-amber-500 text-white py-2 px-4 rounded-lg hover:bg-amber-600 transition-colors font-medium"
+                    className="w-full bg-slate-900 text-white hover:bg-amber-500 py-3 px-4 rounded-xl transition-colors duration-300 font-semibold shadow-md flex items-center justify-center"
                     onClick={(e) => {
                       e.stopPropagation();
                       navigate(`/property/${property._id}`);

@@ -57,6 +57,8 @@ const Header = () => {
       </div>
 
       {/* Main Header - Becomes sticky on scroll */}
+      {/* Placeholder to prevent layout jump */}
+      {isSticky && <div className="h-[80px] lg:h-[104px]"></div>}
       <div className={`bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 shadow-xl transition-all duration-300 ${
         isSticky ? 'fixed top-0 left-0 right-0 z-50' : 'relative'
       }`}>

@@ -13,13 +13,16 @@ import CookiePolicy from './components/CookiePolicy';
 import AdminLogin from './components/admin/AdminLogin';
 import AdminDashboard from './components/admin/AdminDashboard';
 import PropertyDetails from './components/PropertyDetails';
+import HeroSlider from './components/HeroSlider';
+import Home from './components/Home';
 import PropTypes from 'prop-types';
+import { Toaster } from 'react-hot-toast';
 
 // User Layout Component
 const UserLayout = ({ children }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex flex-col">
     <Header />
-    <main className="flex-grow pt-32">
+    <main className="flex-grow">
       {children}
     </main>
     <Footer />
@@ -43,22 +46,11 @@ AdminLayout.propTypes = {
 
 function App() {
   return (
-    <Routes>
-      {/* User Routes with Header/Footer */}
-      <Route path="/" element={
-        <UserLayout>
-          <div className="container mx-auto px-4 py-12">
-            <div className="text-center max-w-4xl mx-auto">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-800 mb-6 leading-tight">
-                Welcome to SunRise Properties
-              </h1>
-              <p className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                Your trusted partner in finding the perfect property. Discover residential and commercial spaces that match your dreams.
-              </p>
-            </div>
-          </div>
-        </UserLayout>
-      } />
+    <>
+      <Toaster position="top-right" />
+      <Routes>
+        {/* User Routes with Header/Footer */}
+      <Route path="/" element={<UserLayout><Home /></UserLayout>} />
       <Route path="/about" element={<UserLayout><AboutUs /></UserLayout>} />
       <Route path="/services" element={<UserLayout><Services /></UserLayout>} />
       <Route path="/residential" element={<UserLayout><Properties category="residential" /></UserLayout>} />
@@ -75,6 +67,7 @@ function App() {
       <Route path="/admin/login" element={<AdminLayout><AdminLogin /></AdminLayout>} />
       <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
     </Routes>
+    </>
   );
 }
 

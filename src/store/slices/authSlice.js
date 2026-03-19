@@ -25,13 +25,15 @@ export const loginAdmin = createAsyncThunk(
     }
 );
 
+const token = localStorage.getItem('adminToken');
+
 const authSlice = createSlice({
     name: 'auth',
     initialState: {
-        user: null,
+        user: token ? { username: 'admin', role: 'admin' } : null,
         loading: false,
         error: null,
-        isAuthenticated: false,
+        isAuthenticated: !!token,
     },
     reducers: {
         clearError: (state) => {
