@@ -13,7 +13,7 @@ const slides = [
   },
   {
     id: 2,
-    image: 'https://images.unsplash.com/photo-1600607687931-cecebd808ebb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
     title: 'Premium Spaces for Your Business',
     subtitle: 'Find the perfect commercial property to elevate your enterprise to the next level.',
     link: '/commercial',
@@ -51,30 +51,27 @@ const HeroSlider = () => {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-          }`}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
+            }`}
         >
           {/* Background Image with Zoom animation */}
           <div className="absolute inset-0 overflow-hidden">
             <img
               src={slide.image}
               alt={slide.title}
-              className={`w-full h-full object-cover transition-transform duration-[10000ms] ease-linear ${
-                index === currentSlide ? 'scale-110' : 'scale-100'
-              }`}
+              className={`w-full h-full object-cover transition-transform duration-[10000ms] ease-linear ${index === currentSlide ? 'scale-110' : 'scale-100'
+                }`}
             />
           </div>
-          
+
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/40 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900/80 to-transparent" />
 
           {/* Text Content */}
           <div className="absolute inset-0 flex items-center px-4 sm:px-8 lg:px-16 max-w-7xl mx-auto h-full w-full">
-            <div className={`max-w-xl transition-all duration-1000 transform ${
-              index === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-            }`}>
+            <div className={`max-w-xl transition-all duration-1000 transform ${index === currentSlide ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+              }`}>
               <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-white mb-6 leading-tight drop-shadow-lg">
                 {slide.title}
               </h1>
@@ -99,11 +96,10 @@ const HeroSlider = () => {
           <button
             key={index}
             onClick={() => goToSlide(index)}
-            className={`transition-all duration-300 rounded-full ${
-              index === currentSlide 
-                ? 'w-8 h-2.5 bg-amber-500' 
-                : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
-            }`}
+            className={`transition-all duration-300 rounded-full ${index === currentSlide
+              ? 'w-8 h-2.5 bg-amber-500'
+              : 'w-2.5 h-2.5 bg-white/50 hover:bg-white/80'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
