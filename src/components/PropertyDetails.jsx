@@ -486,14 +486,14 @@ const PropertyDetails = () => {
 
               <div className="mt-4 space-y-3 relative z-10">
                 <a 
-                  href="tel:+916203176139" 
+                  href="tel:+919406650197" 
                   className="w-full bg-slate-100 text-slate-800 py-4 px-6 rounded-2xl hover:bg-slate-200 transition-all duration-300 font-bold flex items-center justify-center gap-3 shadow-sm transform hover:-translate-y-1 border border-slate-200"
                 >
                   <HiPhone className="w-6 h-6 text-slate-600" />
                   Call Now
                 </a>
                 <a 
-                  href="https://wa.me/916203176139" 
+                  href="https://wa.me/919406650197" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="w-full bg-[#25D366] text-white py-4 px-6 rounded-2xl hover:bg-[#128C7E] transition-all duration-300 font-bold flex items-center justify-center gap-3 shadow-lg shadow-[#25D366]/20 hover:shadow-[#25D366]/40 transform hover:-translate-y-1"

@@ -38,7 +38,7 @@ const Header = () => {
               </div>
               <div className="flex items-center gap-2">
                 <HiPhone className="text-amber-400 w-4 h-4 flex-shrink-0" />
-                <span className="text-xs sm:text-sm">+91-9826098008 | +91-8720010601</span>
+                <span className="text-xs sm:text-sm">+91-9406650197</span>
               </div>
             </div>
 
@@ -46,7 +46,7 @@ const Header = () => {
             <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-6 w-full sm:w-auto">
               <div className="flex items-center gap-2">
                 <HiMail className="text-amber-400 w-4 h-4 flex-shrink-0" />
-                <span className="text-xs sm:text-sm text-center sm:text-left">info@sunriseproperties.com / sunriseproperties@gmail.com</span>
+                <span className="text-xs sm:text-sm text-center sm:text-left">sunriseproperties589@gmail.com</span>
               </div>
               <div className="bg-amber-400 text-slate-900 px-3 py-1 rounded-md font-semibold text-xs sm:text-sm whitespace-nowrap">
                 RERA Regd. No. : A-BPL-24-1688
@@ -84,6 +84,10 @@ const Header = () => {
               Commercial
               <span className={`absolute bottom-0 left-0 h-0.5 bg-amber-400 transition-all duration-300 ${isActive('/commercial') ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
             </Link>
+            <Link to="/investment" className="text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium relative group text-sm xl:text-base">
+              Investment
+              <span className={`absolute bottom-0 left-0 h-0.5 bg-amber-400 transition-all duration-300 ${isActive('/investment') ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
+            </Link>
             <Link to="/projects" className="text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium relative group text-sm xl:text-base">
               Projects
               <span className={`absolute bottom-0 left-0 h-0.5 bg-amber-400 transition-all duration-300 ${isActive('/projects') ? 'w-full' : 'w-0 group-hover:w-full'}`}></span>
@@ -116,7 +120,7 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         <div className={`lg:hidden bg-slate-800 border-t border-slate-700 transition-all duration-300 ${
-          isMenuOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
+          isMenuOpen ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
           <nav className="px-4 py-6 space-y-4">
             <Link to="/" onClick={toggleMenu} className="block text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium py-2">
@@ -127,6 +131,9 @@ const Header = () => {
             </Link>
             <Link to="/commercial" onClick={toggleMenu} className="block text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium py-2">
               Commercial
+            </Link>
+            <Link to="/investment" onClick={toggleMenu} className="block text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium py-2">
+              Investment
             </Link>
             <Link to="/projects" onClick={toggleMenu} className="block text-slate-200 hover:text-amber-400 transition-colors duration-300 font-medium py-2">
               Projects

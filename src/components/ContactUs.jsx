@@ -95,8 +95,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <p className="text-slate-400 text-sm uppercase tracking-wider font-semibold mb-1">Email</p>
-                      <a href="mailto:info@sunriseproperties.com" className="text-slate-200 block hover:text-amber-400 transition-colors">info@sunriseproperties.com</a>
-                      <a href="mailto:sunriseproperties@gmail.com" className="text-slate-200 block hover:text-amber-400 transition-colors">sunriseproperties@gmail.com</a>
+                      <a href="mailto:sunriseproperties589@gmail.com" className="text-slate-200 block hover:text-amber-400 transition-colors">sunriseproperties589@gmail.com</a>
                     </div>
                   </div>
                   
@@ -106,8 +105,7 @@ const ContactUs = () => {
                     </div>
                     <div>
                       <p className="text-slate-400 text-sm uppercase tracking-wider font-semibold mb-1">Call Us</p>
-                      <a href="tel:+919826098008" className="text-slate-200 block hover:text-amber-400 transition-colors text-lg">+91-9826098008</a>
-                      <a href="tel:+918720010601" className="text-slate-200 block hover:text-amber-400 transition-colors text-lg">+91-8720010601</a>
+                      <a href="tel:+919406650197" className="text-slate-200 block hover:text-amber-400 transition-colors text-lg">+91-9406650197</a>
                     </div>
                   </div>
                 </div>

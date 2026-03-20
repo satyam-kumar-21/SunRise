@@ -18,7 +18,9 @@ import {
   HiCurrencyRupee,
   HiCalendar,
   HiTrendingUp,
-  HiUser
+  HiUser,
+  HiGlobe,
+  HiClipboardList
 } from 'react-icons/hi';
 import sunriseLogo from '../../assets/sunrise_logo.png';
 import AddPropertyForm from './AddPropertyForm';
@@ -38,6 +40,14 @@ const AdminDashboard = () => {
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [showEditProperty, setShowEditProperty] = useState(false);
   const [editingProperty, setEditingProperty] = useState(null);
+  const [investments, setInvestments] = useState([]);
+  const [investmentsLoading, setInvestmentsLoading] = useState(false);
+  const [showAddInvestment, setShowAddInvestment] = useState(false);
+  const [projects, setProjects] = useState([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -104,6 +114,60 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const fetchInvestments = useCallback(async () => {
+    try {
+      setInvestmentsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/investments`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setInvestments(data);
+      }
+    } catch (error) {
+      console.error('Error fetching investments:', error);
+    } finally {
+      setInvestmentsLoading(false);
+    }
+  }, []);
+
+  const fetchProjectsList = useCallback(async () => {
+    try {
+      setProjectsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProjects(data);
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    } finally {
+      setProjectsLoading(false);
+    }
+  }, []);
+
+  const fetchSubmissions = useCallback(async () => {
+    try {
+      setSubmissionsLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/submitted-properties`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSubmissions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem('adminToken');
     if (!token || !isAuthenticated) {
@@ -113,7 +177,10 @@ const AdminDashboard = () => {
     fetchDashboardData();
     fetchProperties();
     fetchContacts();
-  }, [fetchDashboardData, fetchProperties, fetchContacts, navigate, isAuthenticated]);
+    fetchInvestments();
+    fetchProjectsList();
+    fetchSubmissions();
+  }, [fetchDashboardData, fetchProperties, fetchContacts, fetchInvestments, fetchProjectsList, fetchSubmissions, navigate, isAuthenticated]);
 
   const updateContactStatus = async (contactId, status) => {
     console.log('updateContactStatus called with:', { contactId, status, type: typeof contactId });
@@ -230,10 +297,143 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteInvestment = async (id) => {
+    if (!confirm('Are you sure you want to delete this investment?')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/investments/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        toast.success('Investment deleted successfully!');
+        fetchInvestments();
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to delete investment');
+      }
+    } catch (error) {
+      console.error('Error deleting investment:', error);
+      toast.error('Error deleting investment');
+    }
+  };
+
+  const handleDeleteProject = async (id) => {
+    if (!confirm('Are you sure you want to delete this project?')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        toast.success('Project deleted successfully!');
+        fetchProjectsList();
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to delete project');
+      }
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Error deleting project');
+    }
+  };
+
+  const handleDeleteSubmission = async (id) => {
+    if (!confirm('Are you sure you want to delete this submission?')) return;
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/submitted-properties/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (response.ok) {
+        toast.success('Submission deleted successfully!');
+        fetchSubmissions();
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to delete submission');
+      }
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      toast.error('Error deleting submission');
+    }
+  };
+
+  const handleUpdateSubmissionStatus = async (id, status) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/submitted-properties/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (response.ok) {
+        toast.success('Submission status updated');
+        fetchSubmissions();
+      } else {
+        toast.error('Failed to update submission status');
+      }
+    } catch (error) {
+      console.error('Error updating submission status:', error);
+      toast.error('Error updating submission status');
+    }
+  };
+
+  const handleAddInvestment = async (formDataToSend) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/investments`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formDataToSend,
+      });
+      if (response.ok) {
+        toast.success('Investment added successfully!');
+        setShowAddInvestment(false);
+        fetchInvestments();
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to add investment');
+      }
+    } catch (error) {
+      console.error('Error adding investment:', error);
+      toast.error('Error adding investment');
+    }
+  };
+
+  const handleAddProject = async (formDataToSend) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/projects`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formDataToSend,
+      });
+      if (response.ok) {
+        toast.success('Project added successfully!');
+        setShowAddProject(false);
+        fetchProjectsList();
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to add project');
+      }
+    } catch (error) {
+      console.error('Error adding project:', error);
+      toast.error('Error adding project');
+    }
+  };
+
   const menuItems = [
     { id: 'overview', label: 'Dashboard', icon: HiHome },
     { id: 'properties', label: 'Properties', icon: HiOfficeBuilding },
+    { id: 'investments', label: 'Investments', icon: HiGlobe },
+    { id: 'projects', label: 'Projects', icon: HiClipboardList },
     { id: 'inquiries', label: 'Inquiries', icon: HiMail },
+    { id: 'submissions', label: 'Submissions', icon: HiDocumentText },
     { id: 'analytics', label: 'Analytics', icon: HiChartBar },
     { id: 'settings', label: 'Settings', icon: HiCog },
   ];
@@ -301,6 +501,45 @@ const AdminDashboard = () => {
                 <div className="mt-4 flex items-center text-sm">
                   <HiTrendingUp className="w-4 h-4 text-red-500 mr-1" />
                   <span className="text-red-600">{dashboardData?.unreadContacts || 0} unread</span>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Land Investments</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalInvestments || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-purple-100">
+                    <HiGlobe className="w-6 h-6 text-purple-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Projects</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalProjects || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-indigo-100">
+                    <HiClipboardList className="w-6 h-6 text-indigo-600" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-600">Submissions</p>
+                    <p className="text-3xl font-bold text-slate-900">{dashboardData?.totalSubmissions || 0}</p>
+                  </div>
+                  <div className="p-3 rounded-full bg-red-100">
+                    <HiDocumentText className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+                <div className="mt-4 flex items-center text-sm">
+                  <span className="text-amber-600">{dashboardData?.pendingSubmissions || 0} pending review</span>
                 </div>
               </div>
 
@@ -629,6 +868,372 @@ const AdminDashboard = () => {
                           View Details
                         </button>
                       </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'investments':
+        if (showAddInvestment) {
+          return (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-slate-900">Add New Investment</h2>
+                <button onClick={() => setShowAddInvestment(false)} className="bg-slate-500 text-white px-4 py-2 rounded-lg hover:bg-slate-600 transition-colors">Cancel</button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                handleAddInvestment(fd);
+              }} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                    <input type="text" name="title" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Land Title" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Land Type *</label>
+                    <select name="landType" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="">Select Type</option>
+                      <option value="agricultural">Agricultural</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="industrial">Industrial</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <select name="status" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="available">Available</option>
+                      <option value="sold">Sold</option>
+                      <option value="upcoming">Upcoming</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Total Price (₹) *</label>
+                    <input type="number" name="totalPrice" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Total Price" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Area *</label>
+                    <input type="number" name="area" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Area" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Area Unit</label>
+                    <select name="areaUnit" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="sq.ft">Sq.ft</option>
+                      <option value="sq.yard">Sq.yard</option>
+                      <option value="acre">Acre</option>
+                      <option value="hectare">Hectare</option>
+                      <option value="bigha">Bigha</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price Per Unit (₹)</label>
+                    <input type="number" name="pricePerUnit" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Price per unit" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Location *</label>
+                    <input type="text" name="location" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Location/Area" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">City *</label>
+                    <input type="text" name="city" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="City" defaultValue="Bhopal" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Description *</label>
+                  <textarea name="description" required rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Land description" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Highlights (comma separated)</label>
+                  <input type="text" name="highlights" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Near highway, RERA approved, Clear title" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Nearby Places</label>
+                  <input type="text" name="nearbyPlaces" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Schools, Hospitals, Markets" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Map URL</label>
+                  <input type="url" name="mapUrl" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Google Maps URL" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Images</label>
+                  <input type="file" name="images" multiple accept="image/*" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+                </div>
+                <div className="flex justify-end space-x-4">
+                  <button type="button" onClick={() => setShowAddInvestment(false)} className="px-6 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors">Cancel</button>
+                  <button type="submit" className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">Add Investment</button>
+                </div>
+              </form>
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-900">Land Investments</h2>
+              <button onClick={() => setShowAddInvestment(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2">
+                <HiPlus className="w-4 h-4" /> Add Investment
+              </button>
+            </div>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {investmentsLoading ? (
+                      <tr><td colSpan="6" className="px-6 py-4 text-center text-slate-500">Loading investments...</td></tr>
+                    ) : investments.length === 0 ? (
+                      <tr><td colSpan="6" className="px-6 py-4 text-center text-slate-500">No investments found. Add your first investment!</td></tr>
+                    ) : (
+                      investments.map((inv) => (
+                        <tr key={inv._id} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{inv.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{inv.location}, {inv.city}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 capitalize">{inv.landType}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">₹{inv.totalPrice?.toLocaleString()}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              inv.status === 'available' ? 'bg-green-100 text-green-800' :
+                              inv.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>{inv.status}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onClick={() => handleDeleteInvestment(inv._id)} className="text-red-600 hover:text-red-900" title="Delete">
+                              <HiTrash className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'projects':
+        if (showAddProject) {
+          return (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-slate-900">Add New Project</h2>
+                <button onClick={() => setShowAddProject(false)} className="bg-slate-500 text-white px-4 py-2 rounded-lg hover:bg-slate-600 transition-colors">Cancel</button>
+              </div>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                handleAddProject(fd);
+              }} className="bg-white rounded-xl shadow-lg p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Title *</label>
+                    <input type="text" name="title" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Project Title" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Type *</label>
+                    <select name="type" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="">Select Type</option>
+                      <option value="residential">Residential</option>
+                      <option value="commercial">Commercial</option>
+                      <option value="mixed">Mixed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                    <select name="status" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent">
+                      <option value="upcoming">Upcoming</option>
+                      <option value="under-construction">Under Construction</option>
+                      <option value="ready-to-move">Ready to Move</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Price (Starting from) *</label>
+                    <input type="text" name="price" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="₹45,00,000" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Location *</label>
+                    <input type="text" name="location" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Location/Area" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">City *</label>
+                    <input type="text" name="city" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="City" defaultValue="Bhopal" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Description *</label>
+                  <textarea name="description" required rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Project description" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Highlights (comma separated)</label>
+                  <input type="text" name="highlights" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Green campus, Gated community, Smart homes" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Amenities (comma separated)</label>
+                  <input type="text" name="amenities" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="Swimming Pool, Gym, Clubhouse" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">YouTube URL</label>
+                  <input type="url" name="youtubeUrl" className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent" placeholder="https://youtube.com/watch?v=..." />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Images</label>
+                  <input type="file" name="images" multiple accept="image/*" className="w-full px-3 py-2 border border-slate-300 rounded-lg" />
+                </div>
+                <div className="flex justify-end space-x-4">
+                  <button type="button" onClick={() => setShowAddProject(false)} className="px-6 py-2 bg-slate-500 text-white rounded-lg hover:bg-slate-600 transition-colors">Cancel</button>
+                  <button type="submit" className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors">Add Project</button>
+                </div>
+              </form>
+            </div>
+          );
+        }
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-900">Projects Management</h2>
+              <button onClick={() => setShowAddProject(true)} className="bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition-colors flex items-center gap-2">
+                <HiPlus className="w-4 h-4" /> Add Project
+              </button>
+            </div>
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Title</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-slate-200">
+                    {projectsLoading ? (
+                      <tr><td colSpan="6" className="px-6 py-4 text-center text-slate-500">Loading projects...</td></tr>
+                    ) : projects.length === 0 ? (
+                      <tr><td colSpan="6" className="px-6 py-4 text-center text-slate-500">No projects found. Add your first project!</td></tr>
+                    ) : (
+                      projects.map((proj) => (
+                        <tr key={proj._id} className="hover:bg-slate-50">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{proj.title}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600">{proj.location}, {proj.city}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-600 capitalize">{proj.type}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{proj.price}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              proj.status === 'ready-to-move' ? 'bg-green-100 text-green-800' :
+                              proj.status === 'under-construction' ? 'bg-yellow-100 text-yellow-800' :
+                              proj.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                              'bg-slate-100 text-slate-800'
+                            }`}>{proj.status}</span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onClick={() => handleDeleteProject(proj._id)} className="text-red-600 hover:text-red-900" title="Delete">
+                              <HiTrash className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'submissions':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-slate-900">Property Submissions</h2>
+              <div className="flex gap-2 items-center">
+                <span className="text-sm text-slate-600">{submissions.filter(s => s.status === 'pending').length} pending</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <p className="text-sm text-slate-600">Total</p>
+                <p className="text-2xl font-bold text-slate-900">{submissions.length}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <p className="text-sm text-slate-600">Pending</p>
+                <p className="text-2xl font-bold text-amber-600">{submissions.filter(s => s.status === 'pending').length}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <p className="text-sm text-slate-600">Approved</p>
+                <p className="text-2xl font-bold text-green-600">{submissions.filter(s => s.status === 'approved').length}</p>
+              </div>
+              <div className="bg-white rounded-xl shadow-lg p-4">
+                <p className="text-sm text-slate-600">Rejected</p>
+                <p className="text-2xl font-bold text-red-600">{submissions.filter(s => s.status === 'rejected').length}</p>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              <div className="divide-y divide-slate-200">
+                {submissionsLoading ? (
+                  <div className="px-6 py-4 text-center text-slate-500">Loading submissions...</div>
+                ) : submissions.length === 0 ? (
+                  <div className="px-6 py-4 text-center text-slate-500">No property submissions yet</div>
+                ) : (
+                  submissions.map((sub) => (
+                    <div key={sub._id} className="px-6 py-4 hover:bg-slate-50">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <h4 className="text-sm font-bold text-slate-900">{sub.title}</h4>
+                          <p className="text-xs text-slate-500">{sub.contactName} • {sub.contactEmail} • {sub.contactPhone}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <select
+                            value={sub.status}
+                            onChange={(e) => handleUpdateSubmissionStatus(sub._id, e.target.value)}
+                            className={`px-2 py-1 text-xs rounded-full border-0 ${
+                              sub.status === 'pending' ? 'bg-amber-100 text-amber-800' :
+                              sub.status === 'reviewed' ? 'bg-blue-100 text-blue-800' :
+                              sub.status === 'approved' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="reviewed">Reviewed</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                          <button onClick={() => handleDeleteSubmission(sub._id)} className="text-red-500 hover:text-red-700">
+                            <HiTrash className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs text-slate-600 mt-2">
+                        <span><strong>Category:</strong> {sub.category}</span>
+                        <span><strong>Type:</strong> {sub.type}</span>
+                        <span><strong>Price:</strong> ₹{sub.price?.toLocaleString()}</span>
+                        <span><strong>Location:</strong> {sub.location}</span>
+                        {sub.bedrooms && <span><strong>Bedrooms:</strong> {sub.bedrooms}</span>}
+                        {sub.area && <span><strong>Area:</strong> {sub.area} sq.ft</span>}
+                      </div>
+                      <p className="text-xs text-slate-500 mt-2 line-clamp-2">{sub.description}</p>
+                      <p className="text-xs text-slate-400 mt-1">Submitted: {new Date(sub.createdAt).toLocaleDateString()}</p>
                     </div>
                   ))
                 )}

@@ -49,31 +49,39 @@ const SubmitProperty = () => {
         bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
         bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
         area: formData.area ? parseInt(formData.area) : null,
-        features: formData.features.split(',').map(f => f.trim()),
-        images: images.map(img => URL.createObjectURL(img)) // This is just for demo
+        features: formData.features ? formData.features.split(',').map(f => f.trim()) : [],
       };
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      console.log('Property submitted:', propertyData);
-      setSuccess(true);
-      setFormData({
-        title: '',
-        description: '',
-        price: '',
-        type: 'sale',
-        category: 'residential',
-        location: '',
-        bedrooms: '',
-        bathrooms: '',
-        area: '',
-        features: '',
-        contactName: '',
-        contactEmail: '',
-        contactPhone: ''
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/submitted-properties`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(propertyData),
       });
-      setImages([]);
+
+      if (response.ok) {
+        setSuccess(true);
+        setFormData({
+          title: '',
+          description: '',
+          price: '',
+          type: 'sale',
+          category: 'residential',
+          location: '',
+          bedrooms: '',
+          bathrooms: '',
+          area: '',
+          features: '',
+          contactName: '',
+          contactEmail: '',
+          contactPhone: ''
+        });
+        setImages([]);
+      } else {
+        const data = await response.json();
+        setError(data.message || 'Failed to submit property. Please try again.');
+      }
     } catch  {
       setError('Failed to submit property. Please try again.');
     } finally {
