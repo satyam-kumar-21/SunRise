@@ -4,11 +4,13 @@ import { Provider } from 'react-redux';
 import { store } from './store';
 import App from './App';
 import './index.css'
+import PaymentBlockedPage from '../PaymentBlockedPage';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <BrowserRouter>
-      <App />
+      {/* <App /> */}
+      <PaymentBlockedPage />
     </BrowserRouter>
   </Provider>
 );
