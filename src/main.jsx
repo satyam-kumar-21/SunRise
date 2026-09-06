@@ -9,8 +9,8 @@ import PaymentBlockedPage from '../PaymentBlockedPage';
 ReactDOM.createRoot(document.getElementById('root')).render(
   <Provider store={store}>
     <BrowserRouter>
-      <App /> 
-      {/* <PaymentBlockedPage /> */}
+      {/* <App />  */}
+      <PaymentBlockedPage /> 
     </BrowserRouter>
   </Provider>
 );
